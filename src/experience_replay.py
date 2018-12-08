@@ -2,14 +2,14 @@ import numpy as np
 
 
 class ExperienceReplay:
-    """Experience replay for an off-policy algorithm for environment with continuous action space"""
-    def __init__(self, capacity, observation_shape, action_shape):
+    """Experience replay for an off-policy algorithm for environment with discrete action space"""
+    def __init__(self, capacity, observation_shape):
         self.capacity = capacity
         self.full = False
         self.cursor = 0
 
         self.observations = np.zeros((capacity,) + observation_shape, dtype=np.float32)
-        self.actions = np.zeros((capacity,) + action_shape, dtype=np.float32)
+        self.actions = np.zeros(capacity, dtype=np.float32)
         self.rewards = np.zeros(capacity, dtype=np.float32)
         self.is_done = np.zeros(capacity, dtype=np.float32)
 

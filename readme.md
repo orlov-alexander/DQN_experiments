@@ -1,11 +1,16 @@
 # Learn Fast, Drive Young
 
+Это прототип того, что можно сделать на конкурсе от МТС
+
 - [ ] Написать нормальный readme
 - [x] Починить ссаный баг со сломанными катинками
 - [x] Сделать Wrapper
 - [x] Сделать Experience Replay
-- [ ] Написать рандомного агента
-- [ ] Написать пайплайн обучения
-- [ ] DDPG
-- [ ] Twin Dueling DDPG
-- [ ] Подебить на конкурсе от MTC
+- [x] Написать рандомного агента
+- [x] Написать пайплайн обучения
+- [x] DQN
+- [x] Double, Dueling
+- [ ] Soft target updates (optional)
+- [ ] Noisy Linear (optional)
+- [ ] Prioritized Experience Replay (optional)
+- [ ] Saver and loader
