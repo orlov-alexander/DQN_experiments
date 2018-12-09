@@ -11,7 +11,7 @@ if __name__ == '__main__':
     exp_replay = ExperienceReplay(100_000, train_env.observation_space.shape)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     agent = Agent(device)
-    optimizer = torch.optim.Adam(agent.parameters(), 0.0002)
+    optimizer = torch.optim.Adam(agent.parameters(), 2.5e-4)
     logdir = 'logs/'
     writer = SummaryWriter(logdir)
     trainer = Trainer(train_env, test_env, 1, exp_replay, agent, optimizer, logdir, writer, 20)

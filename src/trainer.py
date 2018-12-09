@@ -85,7 +85,7 @@ class Trainer:
             observation = new_observation
 
         self.experience_replay.push(observation, action, reward, done)
-        return reward, done
+        return observation, reward, done
 
     def write_logs(self, loss, mean_reward, epsilon, step):
         self.writer.add_scalar('loss', loss, step)
@@ -118,7 +118,7 @@ class Trainer:
         for epoch in range(num_epochs):
             for step in tqdm(range(num_steps), desc='epoch_{}'.format(epoch+1), ncols=80):
                 # add new experience to the buffer
-                reward, done = self.play_and_record(observation, epsilon)
+                observation, reward, done = self.play_and_record(observation, epsilon)
                 if done:
                     episodes_done += 1
                     self.writer.add_scalar('train_episode_reward', episode_reward, episodes_done)
@@ -138,7 +138,7 @@ class Trainer:
                     d = self.write_frequency  # 'd' stands for 'denominator'
                     log_step = (epoch * num_steps + step) // d
                     self.write_logs(mean_loss / d, mean_reward / d, epsilon, log_step)
-                    loss, mean_reward = 0.0, 0.0
+                    mean_loss, mean_reward = 0.0, 0.0
 
             # test performance at the epoch end
             self.test_reward(epoch + 1)
