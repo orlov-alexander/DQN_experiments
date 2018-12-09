@@ -119,10 +119,6 @@ class Trainer:
             for step in tqdm(range(num_steps), desc='epoch_{}'.format(epoch+1), ncols=80):
                 # add new experience to the buffer
                 observation, reward, done = self.play_and_record(observation, epsilon)
-                if done:
-                    episodes_done += 1
-                    self.writer.add_scalar('train_episode_reward', episode_reward, episodes_done)
-                    episode_reward = 0
 
                 # sample some experience for training from the buffer
                 batch = self.experience_replay.sample(batch_size)
@@ -134,6 +130,11 @@ class Trainer:
                 mean_reward += batch[2].mean()
 
                 # write logs
+                if done:
+                    episodes_done += 1
+                    self.writer.add_scalar('train_episode_reward', episode_reward, episodes_done)
+                    episode_reward = 0
+
                 if (epoch * num_steps + step) % self.write_frequency == 0:
                     d = self.write_frequency  # 'd' stands for 'denominator'
                     log_step = (epoch * num_steps + step) // d

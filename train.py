@@ -18,4 +18,4 @@ if __name__ == '__main__':
 
     # r = trainer.test_performance()
     # print(r)
-    trainer.train(500, 1000, 32, 10)
+    trainer.train(100, 1000, 32, 10)
