@@ -47,6 +47,15 @@ class Agent:
     def update_target(self):
         self.target_net.load_state_dict(self.policy_net.state_dict())
 
+    def eval(self):
+        self.policy_net.eval()
+
+    def train(self):
+        self.policy_net.train()
+
+    def save(self, filename):
+        torch.save({'net': self.policy_net.state_dict()}, filename)
+
     def act(self, observation):
         observation = torch.tensor([observation], dtype=torch.float32, device=self.device)
         with torch.no_grad():
