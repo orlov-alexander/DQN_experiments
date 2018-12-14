@@ -1,0 +1,10 @@
+t0 - ошибка в неравенстве с epsilon, bn
+t1 - er capacity = 10_000, без ошибки, bn
+t2 - er capacity = 100_000, no bn
+t3 - er capacity = 10_000, no bn
+---- I am here ----
+t4 - previous_best=t3 + noisy linear
+t5 - t4 + boltzmann
+TODO:
+done add noisy linear layer
+done add boltzmann sampling

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from .noisy_linear_layer import NoisyLinear
 
 
 class DQN(nn.Module):
@@ -11,13 +12,19 @@ class DQN(nn.Module):
             nn.Dropout(0.5),
             nn.Conv2d(64, 64, 3, 1), nn.ReLU()
         )
+        # for param in self.conv.parameters():
+        #     param.requires_grad = False
         self.advantage = nn.Sequential(
-            nn.Linear(7 * 7 * 64, 512), nn.ReLU(),
-            nn.Linear(512, 5)
+            # nn.Linear(7 * 7 * 64, 512), nn.ReLU(),
+            # nn.Linear(512, 5)
+            NoisyLinear(7 * 7 * 64, 512), nn.ReLU(),
+            NoisyLinear(512, 5)
         )
         self.value = nn.Sequential(
-            nn.Linear(7 * 7 * 64, 512), nn.ReLU(),
-            nn.Linear(512, 1)
+            # nn.Linear(7 * 7 * 64, 512), nn.ReLU(),
+            # nn.Linear(512, 1)
+            NoisyLinear(7 * 7 * 64, 512), nn.ReLU(),
+            NoisyLinear(512, 1)
         )
 
     def forward(self, observation):
@@ -33,6 +40,7 @@ class Agent:
     def __init__(self, device, gamma=0.99):
         self.device = device
         self.gamma = gamma
+        self.criterion = nn.MSELoss()
 
         self.policy_net = DQN()
         self.policy_net.to(device)
@@ -40,6 +48,7 @@ class Agent:
         self.target_net = DQN()
         self.target_net.to(device)
         self.update_target()
+        self.target_net.eval()
 
     def parameters(self):
         return self.policy_net.parameters()
@@ -56,14 +65,24 @@ class Agent:
     def save(self, filename):
         torch.save({'net': self.policy_net.state_dict()}, filename)
 
+    def load(self, filename):
+        checkpoint = torch.load(filename)
+        self.policy_net.load_state_dict(checkpoint['net'])
+        self.target_net.load_state_dict(checkpoint['net'])
+
     def act(self, observation):
         observation = torch.tensor([observation], dtype=torch.float32, device=self.device)
         with torch.no_grad():
             q_values = self.policy_net(observation)
+        # greedy action selection
         action = q_values.argmax(-1)[0]
+        # boltzmann action selection, works ok with trained net
+        # p_for_action = torch.softmax(q_values, dim=-1)
+        # action = torch.multinomial(p_for_action, num_samples=1)
         return action.cpu().item()
 
     def loss_on_batch(self, batch):
+        self.policy_net.train()
         observations, actions, rewards, next_observations, is_done = batch
 
         observations = torch.tensor(observations, dtype=torch.float32, device=self.device)
@@ -80,6 +99,8 @@ class Agent:
             next_q_values = self.target_net(next_observations)
         next_actions = curr_q_values.argmax(-1)
         next_q_values_for_actions = next_q_values[torch.arange(batch_size), next_actions]
-        target_q_values = rewards + (1.0 - is_done) * self.gamma * next_q_values_for_actions
-        loss = 0.5 * ((q_values_for_actions - target_q_values) ** 2).mean()
+        # target_q_values = rewards + (1.0 - is_done) * self.gamma * next_q_values_for_actions
+        # agent cant see how many ticks are passed
+        target_q_values = rewards + self.gamma * next_q_values_for_actions
+        loss = self.criterion(q_values_for_actions, target_q_values)
         return loss

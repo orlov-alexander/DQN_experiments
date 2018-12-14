@@ -31,6 +31,7 @@ class Trainer:
         }
 
     def train_step(self, batch):
+        self.agent.train()
         loss = self.agent.loss_on_batch(batch)
         self.optimizer.zero_grad()
         loss.backward()
@@ -55,7 +56,7 @@ class Trainer:
 
     def test_reward(self, step):
         test_reward = sum([self.test_performance() for _ in range(self.num_tests)])
-        self.writer.add_scalar('test_reward', test_reward / self.num_tests, step)
+        self.writer.add_scalar('test_reward', test_reward / self.num_tests, step + 137)
 
     def fill_buffer(self, batch_size):
         observation = self.train_environment.reset()
@@ -72,19 +73,21 @@ class Trainer:
 
     def play_and_record(self, observation, epsilon):
         # makes single environment step and stores (s, a, r, s', done) in replay buffer
-        if np.random.rand() < epsilon:
+        self.agent.train()
+        if np.random.rand() > epsilon:
             action = self.agent.act(observation)
         else:
             action = np.random.randint(5)
         env_action = self.action_dict[action]
         new_observation, reward, done, _ = self.train_environment.step(env_action)
+        # push (s, a, r, done) before reset!
+        self.experience_replay.push(observation, action, reward, done)
 
         if done:
             observation = self.train_environment.reset()
         else:
             observation = new_observation
 
-        self.experience_replay.push(observation, action, reward, done)
         return observation, reward, done
 
     def write_logs(self, loss, mean_reward, epsilon, step):
@@ -110,7 +113,8 @@ class Trainer:
         # train statistics
         episode_reward, episodes_done = 0, 0
         mean_loss, mean_reward = 0.0, 0.0
-        epsilon, decay = 1.0, 0.9 / (num_epochs / 2)
+        # epsilon, decay = 1.0, 0.9 / (num_epochs / 2)
+        epsilon, decay = 0, 0
 
         # fill buffer
         observation = self.fill_buffer(batch_size)
@@ -132,12 +136,12 @@ class Trainer:
                 # write logs
                 if done:
                     episodes_done += 1
-                    self.writer.add_scalar('train_episode_reward', episode_reward, episodes_done)
+                    self.writer.add_scalar('train_episode_reward', episode_reward, episodes_done + 568)
                     episode_reward = 0
 
                 if (epoch * num_steps + step) % self.write_frequency == 0:
                     d = self.write_frequency  # 'd' stands for 'denominator'
-                    log_step = (epoch * num_steps + step) // d
+                    log_step = (epoch * num_steps + step) // d + 6858
                     self.write_logs(mean_loss / d, mean_reward / d, epsilon, log_step)
                     mean_loss, mean_reward = 0.0, 0.0
 
@@ -145,7 +149,7 @@ class Trainer:
             self.test_reward(epoch + 1)
             # update target network and decrease epsilon
             self.agent.update_target()
-            epsilon = max(0.1, epsilon - decay)
+            # epsilon = max(0.1, epsilon - decay)
             # save agent
             if (epoch + 1) % save_freq == 0:
                 self.agent.save(self.logdir + 'epoch_{}.pth'.format(epoch))

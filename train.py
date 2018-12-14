@@ -8,14 +8,15 @@ from src.q_network import Agent
 
 if __name__ == '__main__':
     train_env, test_env = create_envs()
-    exp_replay = ExperienceReplay(100_000, train_env.observation_space.shape)
+    exp_replay = ExperienceReplay(5_000, train_env.observation_space.shape)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     agent = Agent(device)
+    agent.load('logs/t4/epoch_99.pth')
     optimizer = torch.optim.Adam(agent.parameters(), 2.5e-4)
-    logdir = 'logs/'
+    logdir = 'logs/t4/'
     writer = SummaryWriter(logdir)
     trainer = Trainer(train_env, test_env, 1, exp_replay, agent, optimizer, logdir, writer, 20)
 
     # r = trainer.test_performance()
     # print(r)
-    trainer.train(100, 1000, 32, 10)
+    trainer.train(100, 1000, 32, 1)
