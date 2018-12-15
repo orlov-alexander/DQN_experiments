@@ -3,6 +3,13 @@ import torch
 import torch.nn as nn
 from torch.nn.functional import linear
 
+use_cuda = torch.cuda.is_available()
+device = torch.device("cuda" if use_cuda else "cpu")
+
+
+# torch.manual_seed(args.seed)
+# if use_cuda:
+#     torch.cuda.manual_seed(args.seed)
 
 # Naive implementation: noise sampled for __every__ forward step
 class NoisyLinear(nn.Module):
@@ -29,7 +36,9 @@ class NoisyLinear(nn.Module):
     @staticmethod
     def scale_noise(size):
         # noinspection PyUnresolvedReferences
-        x = torch.randn(size)
+        # device = torch.device("cuda" if use_cuda else "cpu")
+        x = torch.randn(size).to(device)
+
         return x.sign().mul_(x.abs().sqrt_())
 
     def forward(self, x):
@@ -38,12 +47,16 @@ class NoisyLinear(nn.Module):
             in_noise = self.scale_noise(self.in_features)
             out_noise = self.scale_noise(self.out_features)
         else:
-            in_noise = torch.zeros(self.in_features, dtype=torch.float32)
-            out_noise = torch.zeros(self.out_features, dtype=torch.float32)
-        epsilon_w = out_noise.ger(in_noise)
-        epsilon_b = out_noise
+            in_noise = torch.zeros(self.in_features, dtype = torch.float32)
+            out_noise = torch.zeros(self.out_features, dtype = torch.float32)
+        epsilon_w = out_noise.ger(in_noise).to(device)
+        epsilon_b = out_noise.to(device)
 
+        # print('first_line')
+        # print(type(self.weight_mu), type(self.weight_sigma), type(epsilon_w))
         w = self.weight_mu + self.weight_sigma * epsilon_w
+        # print('seconds_line')
+        # print(type(self.bias_mu), type(self.bias_sigma), type(epsilon_b))
         b = self.bias_mu + self.bias_sigma * epsilon_b
         return linear(x, w, b)
 

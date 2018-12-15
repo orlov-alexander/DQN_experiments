@@ -99,8 +99,8 @@ class Agent:
             next_q_values = self.target_net(next_observations)
         next_actions = curr_q_values.argmax(-1)
         next_q_values_for_actions = next_q_values[torch.arange(batch_size), next_actions]
-        # target_q_values = rewards + (1.0 - is_done) * self.gamma * next_q_values_for_actions
+        target_q_values = rewards + (1.0 - is_done) * self.gamma * next_q_values_for_actions
         # agent cant see how many ticks are passed
-        target_q_values = rewards + self.gamma * next_q_values_for_actions
+        # target_q_values = rewards + self.gamma * next_q_values_for_actions
         loss = self.criterion(q_values_for_actions, target_q_values)
         return loss
