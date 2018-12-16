@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from .noisy_linear_layer import NoisyLinear
 
-
 class DQN(nn.Module):
     def __init__(self):
         super(DQN, self).__init__()
@@ -65,10 +64,28 @@ class Agent:
     def save(self, filename):
         torch.save({'net': self.policy_net.state_dict()}, filename)
 
-    def load(self, filename):
-        checkpoint = torch.load(filename)
+    def load(self, filename, **kwargs):
+        checkpoint = torch.load(filename, **kwargs)
         self.policy_net.load_state_dict(checkpoint['net'])
         self.target_net.load_state_dict(checkpoint['net'])
+
+    # def act(self, observation):
+    #     # print('kek')
+    #     # old_obs = observation
+    #     # observation = torch.tensor([observation], dtype=torch.float32, device=self.device)
+    #     assert len(observation.shape) == 4, observation.shape
+    #     observation = torch.tensor(observation, dtype = torch.float32, device = self.device)
+    #     with torch.no_grad():
+    #         q_values = self.policy_net(observation)
+    #     # greedy action selection
+    #     #action = q_values.argmax(-1)[0]
+    #     action = q_values.argmax(-1)
+    #     # boltzmann action selection, works ok with trained net
+    #     # p_for_action = torch.softmax(q_values, dim=-1)
+    #     # action = torch.multinomial(p_for_action, num_samples=1)
+    #
+    #     #return action.cpu().item()
+    #     return action.cpu().data.numpy()
 
     def act(self, observation):
         observation = torch.tensor([observation], dtype=torch.float32, device=self.device)

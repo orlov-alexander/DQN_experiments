@@ -6,7 +6,7 @@ class Trainer:
     def __init__(self,
                  train_environment, test_environment, num_tests, experience_replay,
                  agent, optimizer,
-                 logdir, writer, write_frequency):
+                 logdir, writer, write_frequency, n_jobs):
         # environments
         self.train_environment = train_environment
         self.test_environment = test_environment
@@ -21,6 +21,8 @@ class Trainer:
         self.logdir = logdir
         self.writer = writer
         self.write_frequency = write_frequency
+
+        self.n_jobs = n_jobs
 
         self.action_dict = {
             0: [-1, 0, 0],
@@ -95,6 +97,18 @@ class Trainer:
         self.writer.add_scalar('batch_reward', mean_reward, step)
         self.writer.add_scalar('epsilon', epsilon, step)
 
+###
+# states = []
+# for epoch in range(num_epochs):
+#     for step in tqdm(range(num_steps), desc='epoch_{}'.format(epoch+1), ncols=80):
+#
+#         pool.map(make_step, envs)
+#         #
+
+
+###
+
+
     def train(self, num_epochs, num_steps, batch_size, save_freq):
         """main function of the class
 
@@ -118,10 +132,14 @@ class Trainer:
 
         # fill buffer
         observation = self.fill_buffer(batch_size)
+        observation = np.concatenate([observation[np.newaxis, ...]] * self.n_jobs)
+        actions = [0] * self.n_jobs
 
         for epoch in range(num_epochs):
             for step in tqdm(range(num_steps), desc='epoch_{}'.format(epoch+1), ncols=80):
                 # add new experience to the buffer
+                states = self.play_envs(actions)
+
                 observation, reward, done = self.play_and_record(observation, epsilon)
 
                 # sample some experience for training from the buffer
@@ -153,3 +171,62 @@ class Trainer:
             # save agent
             if (epoch + 1) % save_freq == 0:
                 self.agent.save(self.logdir + 'epoch_{}.pth'.format(epoch))
+
+    # def train(self, num_epochs, num_steps, batch_size, save_freq):
+    #     """main function of the class
+    #
+    #     Train DQN agent with epsilon-greedy action selection. Epsilon linearly decay from 1.0 to 0.1
+    #     if first half of training
+    #
+    #     :param num_epochs: number of training epochs, agent will be tested at every epoch end
+    #     :param num_steps: number of training steps per epoch
+    #     :param batch_size:
+    #     :param save_freq: save checkpoint once per several epochs
+    #     :return:
+    #     """
+    #     # test performance before training
+    #     self.test_reward(0)
+    #
+    #     # train statistics
+    #     episode_reward, episodes_done = 0, 0
+    #     mean_loss, mean_reward = 0.0, 0.0
+    #     # epsilon, decay = 1.0, 0.9 / (num_epochs / 2)
+    #     epsilon, decay = 0, 0
+    #
+    #     # fill buffer
+    #     observation = self.fill_buffer(batch_size)
+    #
+    #     for epoch in range(num_epochs):
+    #         for step in tqdm(range(num_steps), desc='epoch_{}'.format(epoch+1), ncols=80):
+    #             # add new experience to the buffer
+    #             observation, reward, done = self.play_and_record(observation, epsilon)
+    #
+    #             # sample some experience for training from the buffer
+    #             batch = self.experience_replay.sample(batch_size)
+    #             loss = self.train_step(batch)
+    #
+    #             # update writer statistics
+    #             episode_reward += reward
+    #             mean_loss += loss
+    #             mean_reward += batch[2].mean()
+    #
+    #             # write logs
+    #             if done:
+    #                 episodes_done += 1
+    #                 self.writer.add_scalar('train_episode_reward', episode_reward, episodes_done + 568)
+    #                 episode_reward = 0
+    #
+    #             if (epoch * num_steps + step) % self.write_frequency == 0:
+    #                 d = self.write_frequency  # 'd' stands for 'denominator'
+    #                 log_step = (epoch * num_steps + step) // d + 6858
+    #                 self.write_logs(mean_loss / d, mean_reward / d, epsilon, log_step)
+    #                 mean_loss, mean_reward = 0.0, 0.0
+    #
+    #         # test performance at the epoch end
+    #         self.test_reward(epoch + 1)
+    #         # update target network and decrease epsilon
+    #         self.agent.update_target()
+    #         # epsilon = max(0.1, epsilon - decay)
+    #         # save agent
+    #         if (epoch + 1) % save_freq == 0:
+    #             self.agent.save(self.logdir + 'epoch_{}.pth'.format(epoch))

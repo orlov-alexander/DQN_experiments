@@ -1,9 +1,13 @@
 import gym
 import numpy as np
+from pyvirtualdisplay import Display
 
 
 class EnvWrapper(gym.ObservationWrapper):
     def __init__(self, env, n_frames, frame_skip):
+        display = Display(visible = 0, size = (900, 900))
+        display.start()
+
         super(EnvWrapper, self).__init__(env)
         self.n_frames = n_frames
         self.frame_skip = frame_skip

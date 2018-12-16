@@ -6,7 +6,6 @@ from src.experience_replay import ExperienceReplay
 from src.trainer import Trainer
 from src.q_network import Agent
 
-from pyvirtualdisplay import Display
 import gym
 import matplotlib.pyplot as plt
 
@@ -20,11 +19,9 @@ if __name__ == '__main__':
     parser.add_argument('--learning-rate', type=float, default=0.0001, help='learning rate')
     parser.add_argument('--nepochs', type=int, default=100, help='number of epocs')
     parser.add_argument('--nsteps', type=int, default=2000, help='number of steps')
+    parser.add_argument('--n_jobs', type=int, default=2, help='number of env jobs')
     parser.add_argument('--prefix', type=str, default='t_unk', help='prefix for logs')
     args = parser.parse_args()
-
-    display = Display(visible=0, size=(900, 900))
-    display.start()
 
     train_env, test_env = create_envs()
     exp_replay = ExperienceReplay(args.experience_replay, train_env.observation_space.shape)
@@ -39,7 +36,7 @@ if __name__ == '__main__':
         f.write(json.dumps(vars(args)))
 
     writer = SummaryWriter(logdir)
-    trainer = Trainer(train_env, test_env, 1, exp_replay, agent, optimizer, logdir, writer, 20)
+    trainer = Trainer(train_env, test_env, 1, exp_replay, agent, optimizer, logdir, writer, 20, n_jobs = args.n_jobs)
 
     # r = trainer.test_performance()
     # print(r)
